@@ -1,44 +1,58 @@
-import { id } from 'zod/locales';
 import pool from '../config/database.js';
 
-export const getAllTasks = async () => {
-    const [rows] = await pool.query('SELECT * FROM tacks');
-    return rows;
-};
+const Task = Object.freeze({
 
-export const getTaskById = async (id) => {
-    const [rows] = await pool.query(
-        "SELECT * FROM tasks WHERE id = ?",
-        [id]
-    );
-    return rows[0];
-};
+    getAllTasks: async () => {
+        const [rows] = await pool.query('SELECT * FROM tareas WHERE estado = 1');
+        return rows;
+    },
 
-export const createTask = async ({ titulo, descripcion, estado }) => {
-    const [result] = await pool.query(
-        'INSERT INTO tasks (titulo, descripcion, estado) VALUES (?, ?, ?)',
-        [titulo, descripcion, estado]
-    );
+    getPageTask: async (limit, offset) => {
+        const [rows] = await pool.query(`
+                        SELECT * FROM tareas where estado =1 LIMIT ? OFFSET ?  ;
+            `, [Number(limit), Number(offset)]);
 
-    return {
-        id: result.insertId,
-        titulo,
-        descripcion,
-        estado
-    };
-};
+        return rows;
+    },
 
-export const updateTask = async (id, { titulo, descripcion, estado }) => {
-    await pool.query(
-        'UPDATE tasks SET titulo = ?, descripcion = ?, estado = ? WHERE id = ?',
-        [titulo, descripcion, estado, id]
-    );
+    getTaskById: async (id) => {
+        const [rows] = await pool.query(
+            "SELECT * FROM tareas WHERE id_tareas = ? AND estado = 1",
+            [id]
+        );
+        return rows[0];
+    },
 
-    return { message: "Task actualizado correctamente" };
-};
+    createTask: async ({ titulo, descripcion, estado, user_id }) => {
+        const [result] = await pool.query(
+            'INSERT INTO tareas (titulo, descripcion, estado_actividad, id_usuarios) VALUES (?, ?, ?,?)',
+            [titulo, descripcion, estado, user_id]
+        );
 
-export const deleteTask = async (id) => {
-    await pool.query('DELETE FROM tasks WHERE id = ?', [id]);
-    return { message: "Task eliminado" };
-};
+        return {
+            id: result.insertId,
+            titulo,
+            descripcion,
+            estado,
+            user_id
+        };
+    },
+    updateTask: async (id, { titulo, descripcion, estado }) => {
+        return await pool.query(
+            'UPDATE tareas SET titulo = ?, descripcion = ?, estado_actividad = ? WHERE id_tareas = ?',
+            [titulo, descripcion, estado, id]
+        );
+    },
 
+
+
+    deleteTask: async (id) => {
+        await pool.query('UPDATE tareas SET estado = 0 WHERE id = ?', [id]);
+        return { message: "Task eliminado" };
+    }
+});
+
+
+
+
+export default Task;
